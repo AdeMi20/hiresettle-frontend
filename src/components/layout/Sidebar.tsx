@@ -1,8 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Briefcase, Bell, Activity, LogOut, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Bell, Activity, LogOut, Scale, ShieldCheck, X } from 'lucide-react';
 import { useAuthStore } from '@/lib/hooks/use-auth-store';
 import { shortAddress, cn } from '@/lib/utils';
 import { useMobileSidebar } from './MobileSidebarContext';
@@ -19,6 +20,21 @@ export function Sidebar() {
   const pathname = usePathname();
   const { address, user, logout } = useAuthStore();
   const { open, setOpen } = useMobileSidebar();
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname, setOpen]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false);
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, setOpen]);
 
   const roleLabel = user?.role
     ? { COMPANY: 'Company', RECRUITER: 'Recruiter', ARBITER: 'Arbiter', ADMIN: 'Admin' }[user.role] ?? user.role
@@ -116,6 +132,7 @@ export function Sidebar() {
 
       {/* Mobile slide-over drawer */}
       <aside
+        id="mobile-sidebar"
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex flex-col w-72 bg-white border-r border-gray-100 md:hidden',
           'transition-transform duration-300 ease-in-out',
