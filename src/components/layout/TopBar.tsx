@@ -2,11 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, Bell, LogOut, RefreshCw, Wifi, X } from 'lucide-react';
+import { AlertTriangle, Bell, LogOut, Menu, RefreshCw, Wifi, X } from 'lucide-react';
 import { useFreighterWatcher } from '@/lib/hooks/use-freighter-watcher';
 import { useAuthStore } from '@/lib/hooks/use-auth-store';
+import { useNotifications } from '@/lib/hooks/use-notifications';
+import { useMobileSidebar } from './MobileSidebarContext';
 
 export function TopBar() {
+  const { open, setOpen } = useMobileSidebar();
+  const { unreadCount } = useNotifications();
   const {
     networkMismatch,
     accountMismatch,
@@ -84,7 +88,16 @@ export function TopBar() {
 
       {/* ── Main top bar ────────────────────────────────────────────────── */}
       <header className="h-14 bg-white border-b border-gray-100 flex items-center justify-between px-6 flex-shrink-0">
-        <div />
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="md:hidden p-2 -ml-2 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          aria-label="Open menu"
+          aria-expanded={open}
+          aria-controls="mobile-sidebar"
+        >
+          <Menu className="w-5 h-5" aria-hidden="true" />
+        </button>
         <div className="flex items-center gap-3">
           {/* Network badge — turns red with a refresh icon when mismatched */}
           <span
@@ -116,10 +129,14 @@ export function TopBar() {
           <Link
             href="/notifications"
             className="relative p-2 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-            aria-label="Notifications"
+            aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
           >
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500" />
+            <Bell className="w-4 h-4" aria-hidden="true" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] leading-4 text-center font-semibold">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </Link>
         </div>
       </header>
