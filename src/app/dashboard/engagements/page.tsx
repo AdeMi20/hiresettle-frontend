@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Briefcase, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -10,31 +11,51 @@ import { EngagementCard } from '@/components/engagements/EngagementCard';
 import type { Engagement, EngagementStatus } from '@/types';
 
 const DEBOUNCE_MS = 300;
-const PAGE_SIZE   = 10;
+const PAGE_SIZE = 10;
 
 type ViewAs = 'company' | 'recruiter' | 'arbiter';
 
 export default function EngagementsPage() {
-  const router       = useRouter();
+  return (
+    <Suspense
+      fallback={
+        <div className="space-y-3">
+          {Array.from({ length: PAGE_SIZE / 2 }).map((_, index) => (
+            <div key={index} className="card p-5 animate-pulse">
+              <div className="h-4 bg-gray-100 rounded w-48 mb-3" />
+              <div className="h-3 bg-gray-100 rounded w-64 mb-2" />
+              <div className="h-3 bg-gray-100 rounded w-40" />
+            </div>
+          ))}
+        </div>
+      }
+    >
+      <EngagementsContent />
+    </Suspense>
+  );
+}
+
+function EngagementsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const { address }  = useAuthStore();
+  const { address } = useAuthStore();
 
   // Initialise all filter state from URL so views are shareable / survive refresh
-  const initialSearch = searchParams.get('q')      ?? '';
+  const initialSearch = searchParams.get('q') ?? '';
   const initialStatus = (searchParams.get('status') ?? '') as EngagementStatus | '';
   const initialViewAs = (searchParams.get('viewAs') ?? 'company') as ViewAs;
-  const initialPage   = Math.max(1, Number(searchParams.get('page') ?? '1'));
+  const initialPage = Math.max(1, Number(searchParams.get('page') ?? '1'));
 
-  const [inputValue,      setInputValue]      = useState(initialSearch);
+  const [inputValue, setInputValue] = useState(initialSearch);
   const [committedSearch, setCommittedSearch] = useState(initialSearch);
-  const [statusFilter,    setStatusFilter]    = useState<EngagementStatus | ''>(initialStatus);
-  const [viewAs,          setViewAs]          = useState<ViewAs>(initialViewAs);
-  const [page,            setPage]            = useState(initialPage);
+  const [statusFilter, setStatusFilter] = useState<EngagementStatus | ''>(initialStatus);
+  const [viewAs, setViewAs] = useState<ViewAs>(initialViewAs);
+  const [page, setPage] = useState(initialPage);
 
   const [engagements, setEngagements] = useState<Engagement[]>([]);
-  const [total,       setTotal]       = useState(0);
-  const [totalPages,  setTotalPages]  = useState(1);
-  const [loading,     setLoading]     = useState(true);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -42,10 +63,10 @@ export default function EngagementsPage() {
   const pushParams = useCallback(
     (q: string, status: EngagementStatus | '', role: ViewAs, p: number) => {
       const params = new URLSearchParams();
-      if (q)               params.set('q',      q);
-      if (status)          params.set('status', status);
+      if (q) params.set('q', q);
+      if (status) params.set('status', status);
       if (role !== 'company') params.set('viewAs', role);
-      if (p > 1)           params.set('page',   String(p));
+      if (p > 1) params.set('page', String(p));
       const qs = params.toString();
       router.replace(qs ? `?${qs}` : '?', { scroll: false });
     },
@@ -101,17 +122,17 @@ export default function EngagementsPage() {
     setLoading(true);
 
     const roleFilter =
-      viewAs === 'company'   ? { companyAddress:  address } :
-      viewAs === 'recruiter' ? { recruiterAddress: address } :
-                               { arbiterAddress:   address };
+      viewAs === 'company' ? { companyAddress: address } :
+        viewAs === 'recruiter' ? { recruiterAddress: address } :
+          { arbiterAddress: address };
 
     engagementsApi
       .list({
         ...roleFilter,
-        status: statusFilter    || undefined,
+        status: statusFilter || undefined,
         search: committedSearch || undefined,
         page,
-        limit:  PAGE_SIZE,
+        limit: PAGE_SIZE,
       })
       .then((res) => {
         setEngagements(res.data);
@@ -152,11 +173,10 @@ export default function EngagementsPage() {
             <button
               key={role}
               onClick={() => handleViewAsChange(role)}
-              className={`px-3.5 py-2 text-xs font-medium transition-colors capitalize ${
-                viewAs === role
+              className={`px-3.5 py-2 text-xs font-medium transition-colors capitalize ${viewAs === role
                   ? 'bg-brand-600 text-white'
                   : 'text-gray-600 hover:bg-gray-50'
-              }`}
+                }`}
             >
               As {role}
             </button>

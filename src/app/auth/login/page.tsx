@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, Wallet, ShieldCheck, Clock, DollarSign } from 'lucide-react';
 import { connectFreighter, isFreighterInstalled, signNonce } from '@/lib/stellar/freighter';
@@ -11,6 +12,14 @@ import { Networks } from '@stellar/stellar-sdk';
 type Step = 'idle' | 'connecting' | 'signing' | 'verifying' | 'done';
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100" />}>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const router = useRouter();
   const params = useSearchParams();
   const callbackUrl = params.get('callbackUrl') ?? '/dashboard/engagements';
@@ -55,11 +64,11 @@ export default function LoginPage() {
   };
 
   const stepLabel: Record<Step, string> = {
-    idle:      'Connect Freighter Wallet',
-    connecting:'Requesting wallet access…',
-    signing:   'Sign the message in Freighter…',
+    idle: 'Connect Freighter Wallet',
+    connecting: 'Requesting wallet access…',
+    signing: 'Sign the message in Freighter…',
     verifying: 'Verifying with server…',
-    done:      'Redirecting…',
+    done: 'Redirecting…',
   };
 
   const isLoading = step !== 'idle';
@@ -124,10 +133,9 @@ export default function LoginPage() {
                 const idx = order.indexOf(s);
                 return (
                   <div key={s} className="flex items-center gap-2.5 text-xs">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
-                      idx < cur ? 'bg-green-500 text-white' :
-                      s === step ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-400'
-                    }`}>
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${idx < cur ? 'bg-green-500 text-white' :
+                        s === step ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-400'
+                      }`}>
                       {idx < cur ? '✓' : i + 1}
                     </div>
                     <span className={s === step ? 'text-gray-900 font-medium' : 'text-gray-400'}>
@@ -143,9 +151,9 @@ export default function LoginPage() {
         {/* Features */}
         <div className="mt-6 grid grid-cols-3 gap-3 text-center">
           {[
-            { icon: DollarSign, label: 'Fee protection',   sub: 'Locked in escrow' },
-            { icon: Clock,      label: 'Retention timers', sub: 'Auto-unlock at 30/90d' },
-            { icon: ShieldCheck,label: 'No trust needed',  sub: 'Contract enforces rules' },
+            { icon: DollarSign, label: 'Fee protection', sub: 'Locked in escrow' },
+            { icon: Clock, label: 'Retention timers', sub: 'Auto-unlock at 30/90d' },
+            { icon: ShieldCheck, label: 'No trust needed', sub: 'Contract enforces rules' },
           ].map(({ icon: Icon, label, sub }) => (
             <div key={label} className="card p-3">
               <Icon className="w-4 h-4 text-brand-600 mx-auto mb-1.5" />
